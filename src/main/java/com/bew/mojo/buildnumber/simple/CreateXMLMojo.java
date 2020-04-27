@@ -119,10 +119,10 @@ public class CreateXMLMojo extends AbstractMojo {
      */
     @Parameter(property = "maven.buildNumber.buildNumberPropertyName", defaultValue = "buildNumber")
     private String buildNumberPropertyName;
-    /**
+
+    /*
      * Project output filename;
      */
-//    @Parameter(property = "project.build finalName", readonly = true, required = true)
     private String finalName;
 
     /**
@@ -308,10 +308,6 @@ public class CreateXMLMojo extends AbstractMojo {
 
                 // Update 'project.version'
                 String projectVersion = majorMinorVersion + "." + revision + (release ? "" : "-SNAPSHOT");
-//                setProperty("project.version", projectVersion);
-//                logInfo("project.version: " + projectVersion);
-//                setProperty("project.artifact.version", projectVersion);
-//                logInfo("project.artifact.version: " + projectVersion);
                 logDebug("[OLD] project.artifact().getVersion(): " + theProject.getArtifact().getVersion());
                 theProject.getArtifact().selectVersion(projectVersion);
                 logDebug("[NEW] project.artifact().getVersion(): " + theProject.getArtifact().getVersion() + "\n");
@@ -320,11 +316,9 @@ public class CreateXMLMojo extends AbstractMojo {
                 updatePOM(projectVersion);
 
                 // Final name of files
-//                logInfo("project.build.finalName: " + finalName);
                 logDebug("[OLD] theProject.getBuild().getFinalName(): " + theProject.getBuild().getFinalName());
                 finalName = theProject.getBuild().getFinalName();
                 updateFinalName(projectVersion);
-//                setProperty("project.build.finalName", finalName);
                 theProject.getBuild().setFinalName(finalName);
                 logDebug("[NEW] theProject.getBuild().getFinalName(): " + theProject.getBuild().getFinalName());
             }
@@ -411,53 +405,6 @@ public class CreateXMLMojo extends AbstractMojo {
         } catch (IOException ex) {
             throw new MojoFailureException("pom.xml file output related error.", ex);
         }
-
-//        // Use a SAX builder
-//        SAXBuilder builder = new SAXBuilder();
-//        // build a JDOM2 Document using the SAXBuilder.
-//        Document jdomDoc = null;
-//
-//        try {
-//            jdomDoc = builder.build(pomFile);
-//        } catch (JDOMException | IOException ex) {
-//            logError(CreateXMLMojo.class.getName() + ex);
-//        }
-//
-//        //get the root element
-//        Element project = jdomDoc.getRootElement();
-//        logInfo(project.toString());
-//
-//        // get the first child with the name 'version'
-//        Namespace projectNamespace = project.getNamespace();
-//        Element version = project.getChild("version", projectNamespace);
-//
-//        if (version != null) {
-//            logInfo("old 'project.version': " + version.getText());
-//            version.setText(projectVersion);
-//
-//            // Output as XML
-//            // create XMLOutputter
-//            XMLOutputter xml = new XMLOutputter();
-//            // we want to format the xml. This is used only for demonstration. pretty formatting adds extra spaces and is generally not required.
-//            xml.setFormat(Format.getPrettyFormat());
-//            xml.getFormat().setLineSeparator(LineSeparator.SYSTEM).setIndent("    ");
-//            logInfo(xml.outputString(jdomDoc));
-//        } else {
-//            logInfo("version == null");
-//            Namespace projectNamespace = project.getNamespace();
-//        }
-//        FileOutputStream outputStream = null;
-//
-//        try {
-//            outputStream = new FileOutputStream(pomFile);
-//            xml.output(jdomDoc, outputStream);
-////        } catch (FileNotFoundException ex) {
-////            logError(CreateXMLMojo.class.getName() + ex);
-//        } catch (IOException ex) {
-//            logError(CreateXMLMojo.class.getName() + ex);
-//        } finally {
-//            IOUtil.close(outputStream);
-//        }
     }
 
 }
