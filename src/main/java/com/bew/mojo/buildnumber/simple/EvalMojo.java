@@ -19,8 +19,6 @@ package com.bew.mojo.buildnumber.simple;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
-import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
@@ -29,7 +27,8 @@ import org.apache.maven.project.MavenProject;
  *
  * @author Bradley Willcott
  */
-@Mojo(name = "project.artifact.version", defaultPhase = LifecyclePhase.INITIALIZE, requiresProject = true, threadSafe = true)
+@Deprecated
+//@Mojo(name = "project.artifact.version", defaultPhase = LifecyclePhase.INITIALIZE, requiresProject = true, threadSafe = true)
 public class EvalMojo extends AbstractMojo {
 
     /**
@@ -40,13 +39,12 @@ public class EvalMojo extends AbstractMojo {
      * </p>
      */
     @Parameter(property = "project.artifact.version.format",
-               defaultValue = "${project.version}.${buildNumber}",
-               required = true)
+               defaultValue = "${project.version}.${buildNumber}")
     private String versionFormat;
 
     /**
-     * If <em>this</em> has <b>not</b> been set to "{@code true}",
-     * then "<b>-SNAPSHOT</b>" will be appended to the "{@code versionFormat}".
+     * If <em>this</em> has <b>not</b> been set to "true",
+     * then "<b>-SNAPSHOT</b>" will be appended to the "versionFormat".
      */
     @Parameter(property = "project.artifact.version.release", defaultValue = "false")
     private boolean release;

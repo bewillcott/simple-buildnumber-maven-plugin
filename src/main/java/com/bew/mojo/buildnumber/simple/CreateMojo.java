@@ -1,5 +1,3 @@
-package com.bew.mojo.buildnumber.simple;
-
 /**
  * The MIT License
  * <p>
@@ -20,6 +18,8 @@ package com.bew.mojo.buildnumber.simple;
  * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+package com.bew.mojo.buildnumber.simple;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -29,8 +29,6 @@ import java.util.Properties;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
-import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.IOUtil;
@@ -45,7 +43,7 @@ import org.codehaus.plexus.util.IOUtil;
  * access the build number in your pom with ${buildNumber}.
  * </p><p>
  * <b>NOTE:</b> The code in this file has been modified and cut-down from the original code found in the
- * "{@code buildNumber-maven-plugin}" project. I was not interested in any of the <i>SCM</i> related code, so that went.
+ * "buildnumber-maven-plugin" project. I was not interested in any of the <i>SCM</i> related code, so that went.
  * Neither does the coding layout style conform to the maven preferred style. It is the default styling used in Netbeans 11.3.
  * </p>
  *
@@ -54,8 +52,17 @@ import org.codehaus.plexus.util.IOUtil;
  * @author <a href="mailto:woodj@ucalgary.ca">Julian Wood</a>
  * @version $Id$
  */
-@Mojo(name = "create", defaultPhase = LifecyclePhase.INITIALIZE, requiresProject = true, threadSafe = true)
+@Deprecated
+//@Mojo(name = "create", defaultPhase = LifecyclePhase.INITIALIZE, requiresProject = true, threadSafe = true)
 public class CreateMojo extends AbstractMojo {
+
+    /**
+     * Properties file to be created.
+     *
+     * @since 1.0-beta-2
+     */
+    @Parameter(defaultValue = "${basedir}/buildNumber.properties")
+    private File buildNumberPropertiesFileLocation;
 
     /**
      * You can rename the buildNumber property name to another property name if desired.
@@ -72,13 +79,11 @@ public class CreateMojo extends AbstractMojo {
     @Parameter(property = "maven.buildNumber.keepNumber", defaultValue = "false")
     private boolean keepNumber;
 
-    /**
-     * Properties file to be created.
-     *
-     * @since 1.0-beta-2
-     */
-    @Parameter(defaultValue = "${basedir}/buildNumber.properties")
-    private File buildNumberPropertiesFileLocation;
+    @Parameter(property = "project", required = true, readonly = true)
+    private MavenProject theProject;
+
+    // ////////////////////////////////////// internal variables ///////////////////////////////////
+    private String revision;
 
     /**
      * If set to true, will get the build number once for the entire current build process.
@@ -95,31 +100,25 @@ public class CreateMojo extends AbstractMojo {
     @Parameter(property = "maven.buildNumber.skip", defaultValue = "false")
     private boolean skip;
 
-    @Parameter(property = "project", required = true, readonly = true)
-    private MavenProject project;
-
-    // ////////////////////////////////////// internal variables ///////////////////////////////////
-    private String revision;
-
     @Override
     public void execute()
             throws MojoExecutionException, MojoFailureException {
         if (skip) {
-            getLog().info("Skipping execution.");
+            logInfo("Skipping execution.");
             return;
         }
 
-        if (project != null) {
+        if (theProject != null) {
             // Check if the plugin has already run.
-            revision = project.getProperties().getProperty(buildNumberPropertyName);
+            revision = getProperty(buildNumberPropertyName);
 
             if (runOnce && revision != null) {
-                getLog().info("Revision available from previous execution: " + revision);
+                logInfo("Revision available from previous execution: " + revision);
                 return;
             }
 
             String now = Long.toString(Calendar.getInstance().toInstant().getEpochSecond());
-            getLog().info("Time stamp: " + now);
+            logInfo("Time stamp: " + now);
 
             String s = buildNumberPropertyName;
 
@@ -177,9 +176,23 @@ public class CreateMojo extends AbstractMojo {
             }
 
             if (revision != null) {
-                project.getProperties().put(buildNumberPropertyName, revision);
-                getLog().info(buildNumberPropertyName + ": " + revision);
+                setProperty(buildNumberPropertyName, revision);
+                logInfo(buildNumberPropertyName + ": " + revision);
             }
         }
+    }
+
+    private void logInfo(String msg) {
+        getLog().info(msg);
+    }
+
+    private void setProperty(String property, String value) {
+        if (value != null) {
+            theProject.getProperties().put(property, value);
+        }
+    }
+
+    protected String getProperty(String property) {
+        return theProject.getProperties().getProperty(property);
     }
 }
