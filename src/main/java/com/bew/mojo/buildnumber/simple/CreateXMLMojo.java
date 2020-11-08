@@ -21,19 +21,20 @@ import java.util.Calendar;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.util.IOUtil;
 
 import static java.util.regex.Pattern.MULTILINE;
+import static org.apache.maven.plugins.annotations.LifecyclePhase.VALIDATE;
 
 /**
- * Creates/Increments a build number for the project, and updates the "//project/version" in the "pom.xml"
+ * Creates/Increments a build number for the project, and updates the "project.version" in the "pom.xml"
  * file for the project.
  * <p>
  * You must set the property: major.minor.version
@@ -41,7 +42,8 @@ import static java.util.regex.Pattern.MULTILINE;
  * For example, if your project was at version 1.0-SNAPSHOT,<br>
  * then you would set the following:
  * </p>
- * <pre>
+ * <pre><code>
+ *
  *&lt;project ...&gt;
  *...
  *    &lt;properties&gt;
@@ -73,7 +75,7 @@ import static java.util.regex.Pattern.MULTILINE;
  *        &lt;/profile&gt;
  *        &lt;profile&gt;
  *            &lt;!-- Keep current {buildNumber}, remove '-SNAPSHOT' and update the 'pom.xml' file --&gt;
- *            &lt;id&gt;release-profile&lt;/id&gt;
+ *            &lt;id&gt;release&lt;/id&gt;
  *            &lt;build&gt;
  *                &lt;plugins&gt;
  *                    &lt;plugin&gt;
@@ -100,28 +102,36 @@ import static java.util.regex.Pattern.MULTILINE;
  *    &lt;/profiles&gt;
  *...
  *&lt;/project&gt;
- * </pre>
+ *</code></pre>
  *
- * @author Bradley Willcott
+ * @author  <a href="mailto:bw.opensource@yahoo.com">Bradley Willcott</a>
  * @since 1.0
+ * @version 1.0.9
  */
-@Mojo(name = "create-xml", defaultPhase = LifecyclePhase.INITIALIZE, requiresProject = true, threadSafe = true)
+@Mojo(name = "create-xml", defaultPhase = VALIDATE, requiresProject = true,
+      threadSafe = false, executionStrategy = "once-per-session")
 public class CreateXMLMojo extends AbstractMojo {
 
     /**
-     * Properties file to be created.
+     * The default name of the build number property.
+     * Used to store number in the property file.
      */
-    @Parameter(property = "maven.buildNumber.buildNumberPropertiesFileLocation", defaultValue = "${basedir}/buildNumber.properties")
-    private File buildNumberPropertiesFileLocation;
+    private static final String BUILDNUMBER = "buildNumber";
+
+    /**
+     * Define a static logger variable so that it references the
+     * Logger instance named "CreateXMLMojoTest".
+     */
+    private static final Logger log = LogManager.getLogger();
 
     /**
      * You can rename the buildNumber property name to another property name if desired.
      */
-    @Parameter(property = "maven.buildNumber.buildNumberPropertyName", defaultValue = "buildNumber")
+    @Parameter(property = "simple.buildNumber.propertyName", defaultValue = BUILDNUMBER, readonly = true)
     private String buildNumberPropertyName;
 
-    /*
-     * Project output filename;
+    /**
+     * Project output filename.
      */
     private String finalName;
 
@@ -129,78 +139,90 @@ public class CreateXMLMojo extends AbstractMojo {
      * Set this to "true" to just keep using the current number in the external properties file.
      * Incrementing of the number will be disabled.
      */
-    @Parameter(property = "maven.buildNumber.keepNumber", defaultValue = "false")
+    @Parameter(defaultValue = "false")
     private boolean keepNumber;
 
     /**
      * The project's version as base: major.minor (eg: 1.0)
      * <p>
-     * Add new property to project's 'pom.xml':
-     * </p><p>
-     * ...<br>
-     * &lt;properties&gt;<br>
-     * &nbsp;&nbsp;&nbsp;&nbsp;&lt;major.minor.version&gt;<br>
-     * &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.0<br>
-     * &nbsp;&nbsp;&nbsp;&nbsp;&lt;/major.minor.version&gt;<br>
-     * &nbsp;&nbsp;&nbsp;&nbsp;...<br>
-     * &lt;/properties&gt;<br>
+     * Add the new property to the project's "pom.xml":
+     * </p><pre><code>
      * ...
-     * </p>
+     * &lt;properties&gt;
+     *     &lt;major.minor.version&gt;1.0&lt;/major.minor.version&gt;
+     *     ...
+     * &lt;/properties&gt;
+     * ...
+     * </code></pre>
      */
     @Parameter(property = "major.minor.version", readonly = true)
     private String majorMinorVersion;
 
     /**
      * The number of spaces used to indent text.
+     * <p>
+     * TODO: This will go when I rewrite the updatePOM() method.
      */
-    @Parameter(property = "maven.buildNumber.numberOfIndentSpaces", defaultValue = "4")
+    @Parameter(alias = "indentSpaces", property = "simple.buildNumber.indentSpaces", defaultValue = "4")
     private int numberOfIndentSpaces;
+
+    /**
+     * The old version text.
+     */
     private String oldVersion;
 
     /**
      * The project's "pom.xml" file.
      */
-    @Parameter(defaultValue = "pom.xml", readonly = true, required = true)
+    @Parameter(defaultValue = "${project.basedir}/pom.xml")
     private File pomFile;
 
     /**
-     * If not set to <i>true</i>, then "-SNAPSHOT" will be appended to the value
-     * to be set in "//project/version" in the pom.xml file.
+     * Properties file to be created.
      */
-    @Parameter(property = "maven.buildNumber.release", defaultValue = "false")
+    @Parameter(property = "simple.buildNumber.propertiesFilename",
+               defaultValue = "${project.basedir}/buildNumber.properties", readonly = true)
+    private File propertiesFileLocation;
+
+    /**
+     * If not set to <i>true</i>, then "-SNAPSHOT" will be appended to the value
+     * to be set in "project.version" in the pom.xml file.
+     */
+    @Parameter(defaultValue = "false")
     private boolean release;
 
     // ////////////////////////////////////// internal variables ///////////////////////////////////
-    private String revision;
-
-    /**
-     * If set to true, will get the build number once for the entire current build process.
-     * Required for when using "maven.source.plugin:jar".
-     */
-    @Parameter(property = "maven.buildNumber.runOnce", defaultValue = "true")
-    private boolean runOnce;
-
     /**
      * Whether to skip this execution.
      */
-    @Parameter(property = "maven.buildNumber.skip", defaultValue = "false")
+    @Parameter(defaultValue = "false")
     private boolean skip;
 
     /**
      * The maven project.
+     *
+     * @parameter property="project"
+     * @readonly
+     * @required
      */
-    @Parameter(property = "project", required = true, readonly = true)
+    @Parameter(property = "project", readonly = true, required = true)
     private MavenProject theProject;
 
     @Override
-    public void execute()
-            throws MojoExecutionException, MojoFailureException {
-        if (skip) {
+    public void execute() throws MojoExecutionException, MojoFailureException {
+
+        logEntry();
+        logTrace("simple.buildNumber.propertyName: {}", buildNumberPropertyName);
+        logDebug("theProject: {}", theProject.toString());
+
+        if (skip)
+        {
             logInfo("Skipping execution.");
             return;
         }
 
-        if (majorMinorVersion == null) {
+        if (majorMinorVersion == null)
+        {
             String msg1 = "ERROR: The 'major.minor.version' property has not been set.\n\n"
                           + "This is the project's version as base: major.minor (eg: 1.0)\n\n"
                           + "Add a new property to the project's 'pom.xml':\n\n"
@@ -224,105 +246,126 @@ public class CreateXMLMojo extends AbstractMojo {
                           + "    ...\n"
                           + "</project>\n\n"
                           + "Do NOT directly edit this as it WILL be replaced each time\n"
-                          + "this plugin is run.";
+                          + "this plugin is run, unless <keepNumber>true</keepNumber> is\n"
+                          + "configured.";
             logError(msg1);
             logWarn(msg2);
             throw new MojoFailureException("The 'major.minor.version' property has not been set.");
         }
 
-        if (theProject != null) {
-            // Check if the plugin has already run.
-            revision = getProperty(buildNumberPropertyName);
-
-            if (runOnce && revision != null) {
-                logInfo("Revision available from previous execution: " + revision);
-                return;
-            }
-
+        if (theProject != null)
+        {
+            // Get the timestamp.
             String now = Long.toString(Calendar.getInstance().toInstant().getEpochSecond());
             logDebug("Time stamp: " + now);
 
-            String s = buildNumberPropertyName;
-
-            // check for properties file
-            File propertiesFile = buildNumberPropertiesFileLocation;
-
             // create if not exists
-            if (!propertiesFile.exists()) {
-                try {
-                    if (!propertiesFile.getParentFile().exists()) {
-                        propertiesFile.getParentFile().mkdirs();
+            if (!propertiesFileLocation.exists())
+            {
+                try
+                {
+                    if (!propertiesFileLocation.getParentFile().exists())
+                    {
+                        propertiesFileLocation.getParentFile().mkdirs();
                     }
 
-                    propertiesFile.createNewFile();
-                } catch (IOException e) {
-                    throw new MojoExecutionException("Couldn't create properties file: " + propertiesFile, e);
+                    propertiesFileLocation.createNewFile();
+                } catch (IOException e)
+                {
+                    throw new MojoExecutionException("Couldn't create properties file: " + propertiesFileLocation, e);
                 }
             }
+
+            logTrace("Accessing properties file.");
 
             Properties properties = new Properties();
-            String buildNumberString = null;
-            FileInputStream inputStream = null;
-            FileOutputStream outputStream = null;
+            String strBuildNumber = null;
 
-            try {
-                // get the number for the buildNumber specified
-                inputStream = new FileInputStream(propertiesFile);
+            // get the number for the buildNumber specified
+            try (FileInputStream inputStream = new FileInputStream(propertiesFileLocation))
+            {
                 properties.load(inputStream);
-                buildNumberString = properties.getProperty(s);
 
-                if (buildNumberString == null) {
-                    buildNumberString = "0";
-                }
+            } catch (IOException ex)
+            {
+                throw new MojoExecutionException("Couldn't load properties file: " + propertiesFileLocation, ex);
+            }
 
-                int buildNumber = Integer.valueOf(buildNumberString);
+            strBuildNumber = properties.getProperty(BUILDNUMBER);
 
-                if (!keepNumber) {
-                    // store the increment
-                    properties.setProperty(s, String.valueOf(++buildNumber));
-                    properties.setProperty("time", now);
-                    outputStream = new FileOutputStream(propertiesFile);
-                    properties.store(outputStream, "maven.buildNumber.plugin properties file");
-                }
+            logTrace("{} : {}", BUILDNUMBER, strBuildNumber);
 
-                revision = Integer.toString(buildNumber);
-            } catch (NumberFormatException e) {
+            if (strBuildNumber == null)
+            {
+                strBuildNumber = "0";
+            }
+
+            int buildNumber;
+
+            try
+            {
+                buildNumber = Integer.parseInt(strBuildNumber);
+            } catch (NumberFormatException e)
+            {
                 throw new MojoExecutionException(
                         "Couldn't parse buildNumber in properties file to an Integer: "
-                        + buildNumberString);
-            } catch (IOException e) {
-                throw new MojoExecutionException("Couldn't load properties file: " + propertiesFile, e);
-            } finally {
-                IOUtil.close(inputStream);
-                IOUtil.close(outputStream);
+                        + strBuildNumber);
             }
 
-            if (revision != null) {
-                setProperty(buildNumberPropertyName, revision);
+            logTrace("keepNumber: {}", keepNumber);
 
-                if (!keepNumber) {
-                    logInfo("New " + buildNumberPropertyName + ": " + revision + "\n");
-                } else {
-                    logInfo("Keeping previous " + buildNumberPropertyName + ": " + revision + "\n");
+            if (!keepNumber)
+            {
+                // Increment build number and store it in the property file.
+                properties.setProperty(BUILDNUMBER, String.valueOf(++buildNumber));
+                properties.setProperty("time", now);
+
+                logTrace("Storing properties: {}", propertiesFileLocation);
+                logDebug(properties.toString());
+
+                try (FileOutputStream outputStream = new FileOutputStream(propertiesFileLocation))
+                {
+                    properties.store(outputStream, "simple-buildnumber-maven-plugin properties file");
+                } catch (IOException ex)
+                {
+                    throw new MojoExecutionException("Couldn't save properties file: " + propertiesFileLocation, ex);
                 }
-
-                // Update 'project.version'
-                String projectVersion = majorMinorVersion + "." + revision + (release ? "" : "-SNAPSHOT");
-                logDebug("[OLD] project.artifact().getVersion(): " + theProject.getArtifact().getVersion());
-                theProject.getArtifact().selectVersion(projectVersion);
-                logDebug("[NEW] project.artifact().getVersion(): " + theProject.getArtifact().getVersion() + "\n");
-
-                // update project 'pom.xml' file
-                updatePOM(projectVersion);
-
-                // Final name of files
-                logDebug("[OLD] theProject.getBuild().getFinalName(): " + theProject.getBuild().getFinalName());
-                finalName = theProject.getBuild().getFinalName();
-                updateFinalName(projectVersion);
-                theProject.getBuild().setFinalName(finalName);
-                logDebug("[NEW] theProject.getBuild().getFinalName(): " + theProject.getBuild().getFinalName());
             }
+
+            logTrace("revision: {}", buildNumber);
+
+            // Set the user set property  to the current/new version string.
+            setProperty(buildNumberPropertyName, "" + buildNumber);
+
+            if (!keepNumber)
+            {
+                logInfo("New " + buildNumberPropertyName + ": " + buildNumber + "\n");
+            } else
+            {
+                logInfo("Keeping previous " + buildNumberPropertyName + ": " + buildNumber + "\n");
+            }
+
+            // Update 'project.version'
+            String projectVersion = majorMinorVersion + "." + buildNumber + (release ? "" : "-SNAPSHOT");
+            logDebug("[OLD] project.artifact().getVersion(): " + theProject.getArtifact().getVersion());
+            theProject.getArtifact().selectVersion(projectVersion);
+            logDebug("[NEW] project.artifact().getVersion(): " + theProject.getArtifact().getVersion() + "\n");
+            logDebug("[OLD] project.getModel().getVersion(): " + theProject.getModel().getVersion());
+            theProject.getModel().setVersion(projectVersion);
+            logDebug("[NEW] project.getModel().getVersion(): " + theProject.getModel().getVersion() + "\n");
+
+            logTrace("update project 'pom.xml' file");
+            updatePOM(projectVersion);
+
+            // Final name of files
+            logDebug("[OLD] theProject.getBuild().getFinalName(): " + theProject.getBuild().getFinalName());
+            finalName = theProject.getBuild().getFinalName();
+            updateFinalName(projectVersion);
+            theProject.getBuild().setFinalName(finalName);
+            logDebug("[NEW] theProject.getBuild().getFinalName(): " + theProject.getBuild().getFinalName());
         }
+
+        logExit();
     }
 
     private String getProperty(String property) {
@@ -330,81 +373,144 @@ public class CreateXMLMojo extends AbstractMojo {
     }
 
     private void logDebug(String msg) {
-        getLog().debug(msg);
+        log.debug(msg);
+    }
+
+    private void logDebug(String message, Object... params) {
+        log.debug(message, params);
+    }
+
+    private void logEntry(String msg) {
+        log.traceEntry(msg);
+    }
+
+    private void logEntry() {
+        log.traceEntry();
+    }
+
+    private void logEntry(String message, Object... params) {
+        log.traceEntry(message, params);
     }
 
     private void logError(String msg) {
-        getLog().error(msg);
+        log.error(msg);
+    }
+
+    private void logExit(String msg) {
+        log.traceExit(msg);
+    }
+
+    private void logExit() {
+        log.traceExit();
+    }
+
+    private void logFatal(String msg) {
+        log.fatal(msg);
     }
 
     private void logInfo(String msg) {
-        getLog().info(msg);
+        log.info(msg);
+    }
+
+    private void logTrace(String msg) {
+        log.trace(msg);
+    }
+
+    private void logTrace(String message, Object... params) {
+        log.trace(message, params);
     }
 
     private void logWarn(String msg) {
-        getLog().warn(msg);
+        log.warn(msg);
     }
 
     private void setProperty(String property, String value) {
-        if (value != null) {
+        if (value != null)
+        {
             theProject.getProperties().put(property, value);
         }
     }
 
     private void updateFinalName(String projectVersion) {
+        logEntry("projectVersion: {}", projectVersion);
+
         String regex = "(?<text>" + oldVersion + ")";
         StringBuilder sb = new StringBuilder();
 
         Pattern p = Pattern.compile(regex);
         Matcher m = p.matcher(finalName);
 
-        if (m.find()) {
+        if (m.find())
+        {
             m.appendReplacement(sb, projectVersion);
-        } else {
-            logWarn("WARNING: //project/build/finalName: Not Updated");
+        } else
+        {
+            logWarn("WARNING: project.build.finalName - Not Updated");
         }
 
         m.appendTail(sb);
         logDebug("sb:\n" + sb);
         finalName = sb.toString();
+
+        logExit();
     }
 
+    /**
+     * TODO: Replace this with a method that uses a full XML reader and writer.
+     *
+     * @param projectVersion
+     *
+     * @throws MojoFailureException
+     * @throws MojoExecutionException
+     */
     private void updatePOM(String projectVersion) throws MojoFailureException, MojoExecutionException {
+        logEntry("projectVersion: {}", projectVersion);
+
         String regex = "^(?<lead>[ ]{" + numberOfIndentSpaces + "}\\<version\\>)(?<text>[^<]*)(?<tail>\\</version\\>[ ]*\\n)";
         StringBuilder pomText = new StringBuilder();
         StringBuilder sb = new StringBuilder();
         String input = "";
 
-        try ( BufferedReader in = new BufferedReader(new FileReader(pomFile))) {
-            while ((input = in.readLine()) != null) {
+        logTrace("About to read in pom file: {}", pomFile);
+
+        try (BufferedReader in = new BufferedReader(new FileReader(pomFile)))
+        {
+            while ((input = in.readLine()) != null)
+            {
                 pomText.append(input).append("\n");
             }
-        } catch (IOException ex) {
+        } catch (IOException ex)
+        {
             throw new MojoFailureException("pom.xml file input related error.", ex);
         }
 
         Pattern p = Pattern.compile(regex, MULTILINE);
         Matcher m = p.matcher(pomText.toString());
 
-        if (m.find()) {
+        if (m.find())
+        {
             logDebug("Found: |" + m.group() + "|");
             oldVersion = m.group("text");
             logDebug("text: |" + oldVersion + "|");
             String replacement = m.group("lead") + projectVersion + m.group("tail");
             logDebug("replacement: |" + replacement + "|");
             m.appendReplacement(sb, replacement);
-        } else {
+        } else
+        {
             throw new MojoExecutionException("<version> tag: Not Found");
         }
 
         m.appendTail(sb);
         logDebug("sb:\n" + sb);
 
-        try ( PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(pomFile)))) {
+        try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(pomFile))))
+        {
             out.print(sb);
-        } catch (IOException ex) {
+        } catch (IOException ex)
+        {
             throw new MojoFailureException("pom.xml file output related error.", ex);
         }
-    }
 
+        logExit();
+    }
 }
