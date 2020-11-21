@@ -141,7 +141,7 @@
     
     <profiles>
         <profile>
-            <id>dev</id>
+            <id>increment-build</id>
             <build>
                 <plugins>
                     <!-- Increment {buildNumber} and update the 'pom.xml' file -->
@@ -150,10 +150,33 @@
                         <artifactId>simple-buildnumber-maven-plugin</artifactId>
                         <executions>
                             <execution>
-                                <id>Update</id>
+                                <id>Increment Build</id>
                                 <goals>
                                     <goal>create-xml</goal>
                                 </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>increment-release</id>
+            <build>
+                <plugins>
+                    <!-- Increment {buildNumber}, remove '-SNAPSHOT' and update the 'pom.xml' file -->
+                    <plugin>
+                        <groupId>com.bew.mojo</groupId>
+                        <artifactId>simple-buildnumber-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>Increment Release</id>
+                                <goals>
+                                    <goal>create-xml</goal>
+                                </goals>
+                                <configuration>
+                                    <release>true</release>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
@@ -292,7 +315,7 @@
                 <plugin>                        
                     <groupId>com.bew.mojo</groupId>
                     <artifactId>simple-buildnumber-maven-plugin</artifactId>
-                    <version>1.0.14-SNAPSHOT</version>
+                    <version>1.0.14</version>
                 </plugin>
             </plugins>
         </pluginManagement>
