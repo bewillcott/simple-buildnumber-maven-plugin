@@ -97,7 +97,7 @@ then you would set the following:
 </project>
 ```
 (_By the way. You could be really lazy, and just copy the relevant sections from above and paste them_
-_directly into your `pom.xml` file.  The "..." are just place holders for the rest of your files text._)
+_directly into your `pom.xml` file.  The "..." are just place holders for the rest of your file's text._)
 
 When you run a profile other than one of the above, then nothing happens to the `<project.version>` setting.
 So, to increment the build number, select the profile: `increment-build`.
@@ -151,7 +151,7 @@ Incrementing of the number will be disabled for this run.
 
 #### &lt;indentSpaces&gt;
 {default: `4`}<br>
-The number of spaces used to indent text.  This important, as it is used to find the &lt;project.version&gt;
+The number of spaces used to indent text.  This is important, as it is used to find the &lt;project.version&gt;
 setting in the `pom.xml` file.
 
 #### &lt;release&gt;

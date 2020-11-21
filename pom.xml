@@ -4,7 +4,7 @@
     
     <groupId>com.bew.mojo</groupId>
     <artifactId>simple-buildnumber-maven-plugin</artifactId>
-    <version>1.0.14</version>
+    <version>1.0.15</version>
     <packaging>maven-plugin</packaging>
     
     <name>Simple BuildNumber Maven Plugin</name>
