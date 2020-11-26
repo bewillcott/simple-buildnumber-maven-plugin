@@ -184,7 +184,7 @@
             </build>
         </profile>
         <profile>
-            <id>release</id>
+            <id>release-build</id>
             <build>
                 <plugins>
                     <!-- Keep current {buildNumber}, remove '-SNAPSHOT' and update the 'pom.xml' file -->
@@ -331,7 +331,6 @@
                     <skipTests>${skip.unit.tests}</skipTests>
                     <!-- Excludes integration tests when unit tests are run. -->
                 </configuration>
-
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
