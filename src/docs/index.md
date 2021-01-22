@@ -1,14 +1,21 @@
 @@@
 use : articles
-title: Your Manual
+title: ${document.title}
 @@@
 
+# ${document.title}
 
-# Your Manual
----
-It is advisable that the first file you create be this file.  Since the final
-'jar' file will contain a stand-alone http server, it will be looking for
-the `index.html` file to serve up first.
+The simple way to create/increment a project buildNumber.
 
-This however is **not** a requirement.  If you want your end-users to get a
-listing of the files in the 'jar' file, then you don't need this file.
+## Work in progress
+I am making some improvements to the internals, plus a few interface changes.
+
+When done I will be releasing it as version 2 as it will not be backwards compatible.
+
+
+## Current release - v1.0
+This is the first release of this project.  I hope that you find it both robust as well as useful.
+
+Currently, I have not uploaded it into the Maven repository, so you will have to download it from here
+and install it locally.  Once I have tidied up some non-critical aspects of the project, I will
+research into doing that.
