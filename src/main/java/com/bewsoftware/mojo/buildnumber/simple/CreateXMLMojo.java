@@ -183,11 +183,14 @@ import static org.apache.maven.plugins.annotations.LifecyclePhase.VALIDATE;
  * Whether or not to skip this execution. A little superfluous when you set things up as above. This may be
  * removed in a later release.
  *
+ * @deprecated Replaced by new goals: <b>increment</b> and <b>keep</b>
+ *
  * @author  <a href="mailto:bw.opensource@yahoo.com">Bradley Willcott</a>
  *
  * @since 1.0
  * @version 1.0.9
  */
+@Deprecated
 @Mojo(name = "create-xml", defaultPhase = VALIDATE, requiresProject = true,
       threadSafe = false, executionStrategy = "once-per-session")
 public class CreateXMLMojo extends AbstractMojo {
@@ -414,7 +417,7 @@ public class CreateXMLMojo extends AbstractMojo {
 
             log.debug("revision: " + buildNumber);
 
-            // Set the user set property  to the current/new version string.
+            // Set the property to the current/new version string.
             setProperty(buildNumberPropertyName, "" + buildNumber);
 
             if (!keepNumber)
