@@ -136,7 +136,6 @@
             <groupId>com.bewsoftware</groupId>
             <artifactId>bewsoftware-utils</artifactId>
             <version>1.0.6</version>
-            <classifier></classifier>
         </dependency>
     </dependencies>
     
