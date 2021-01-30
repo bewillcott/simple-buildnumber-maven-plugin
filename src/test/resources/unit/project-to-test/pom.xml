@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     
     <groupId>com.bewsoftware.test.unit</groupId>
-    <artifactId>project-to-test</artifactId>
+    <artifactId>sbnmp-project-to-test</artifactId>
     <packaging>jar</packaging>
     <version>1.0.1</version>
     
