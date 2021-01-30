@@ -1,0 +1,163 @@
+/*
+This file is part of the MDj Command-line Interface program 
+(aka: mdj-cli).
+
+Copyright (C) 2021 Bradley Willcott
+
+mdj-cli is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+mdj-cli is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+/* 
+    Created on : 15 Jan 2021, 11:36:41 am
+    Author     : <a href="mailto:bw.opensource@yahoo.com">Bradley Willcott</a>
+*/
+
+#navbar ul {
+    font-size:12px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    background-color: #f1f1f1;
+}
+
+#navbar ul li {
+    float: left;
+    list-style: none;
+    position: relative;
+    margin: 0;
+    padding: 0;
+}
+
+#navbar ul li.right {
+    float: right;
+}
+
+/* main level link */
+#navbar ul a {
+    display: inline-block;
+    color: black;
+    text-align: center;
+    padding: 6px 10px;
+    margin: 0;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+#navbar ul li.active{
+    background-color: #4CAF50;
+}
+
+#navbar ul li.subactive{
+    background-color: lightgreen;
+}
+
+#navbar a.previous {
+    display: block;
+    height: 19px;
+    width: 8px;
+    margin-left: 3px;
+    margin-right: 5px;
+    
+}
+
+#navbar a.previous:hover {
+    height: 18px;
+    margin-left: 4px;
+    margin-right: 4px;
+    
+}
+
+#navbar a.previous:active {
+    margin-left: 3px;
+    margin-right: 5px;
+    
+}
+
+/* main level link hover */
+#navbar ul > li:not(.active) > a:not(.previous):hover {
+    background-color: #555;
+    color: white;
+}
+
+/* sub levels dropdown */
+#navbar ul li:hover > ul {
+    display: block;
+}
+
+/* level 2 list */
+#navbar ul ul {
+    display: none;
+    position: absolute;
+    margin: 0;
+    padding: 0;
+    background-color: #f9f9f9;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+#navbar ul ul a {
+    display: block;
+    text-align: left;
+}
+
+#navbar ul ul li {
+    float: none;
+}
+
+/* level 3+ list */
+#navbar ul ul li:hover > ul {
+    display: block;
+}
+
+#navbar ul ul ul {
+    left: 98%;
+    top: 10%;
+}
+
+/* clearfix */
+#navbar ul:after {
+    content: ".";
+    display: block;
+    clear: both;
+    visibility: hidden;
+    line-height: 0;
+    height: 0;
+}
+
+#navbar ul {
+    display: block;
+}
+
+html[xmlns] #navbar ul {
+    display: block;
+}
+
+* html #navbar ul {
+    height: 1%;
+}
+
+@media screen and (max-width: 600px) {
+    #navbar ul ul li.right, 
+    #navbar ul ul li {float: none;}
+}
+
+header {
+    padding: 2px;
+}
+
+header p {
+    font-size:20px;
+    margin: 0;
+    padding: 5px;
+    font-weight: bold;
+}
