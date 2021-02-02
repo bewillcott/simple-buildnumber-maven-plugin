@@ -5,7 +5,7 @@
     <groupId>com.bewsoftware.test.unit</groupId>
     <artifactId>sbnmp-project-to-test</artifactId>
     <packaging>jar</packaging>
-    <version>1.0.1</version>
+    <version>1.0.24</version>
     
     <name>Test simple-buildnumber-maven-plugin</name>
 
@@ -21,6 +21,8 @@
         <project.reporting.outputEncoding>${source.encoding}</project.reporting.outputEncoding>
         <javadoc.reporting.outputDirectory>${project.reporting.outputDirectory}/apidocs</javadoc.reporting.outputDirectory>
         <skip.unit.tests>true</skip.unit.tests>
+        
+        <!--<finalBaseName.propertyName></finalBaseName.propertyName>-->
     </properties>
 
     <profiles>
@@ -259,7 +261,7 @@
                 <plugins>
                     <!-- Increment {buildNumber} and update the 'pom.xml' file -->
                     <plugin>
-                        <groupId>com.bew.mojo</groupId>
+                        <groupId>com.bewsoftware.mojo</groupId>
                         <artifactId>simple-buildnumber-maven-plugin</artifactId>
                         <executions>
                             <execution>
@@ -283,7 +285,7 @@
                 <plugins>
                     <!-- Increment {buildNumber}, remove '-SNAPSHOT' and update the 'pom.xml' file -->
                     <plugin>
-                        <groupId>com.bew.mojo</groupId>
+                        <groupId>com.bewsoftware.mojo</groupId>
                         <artifactId>simple-buildnumber-maven-plugin</artifactId>
                         <executions>
                             <execution>
@@ -307,7 +309,7 @@
                 <plugins>
                     <!-- Keep current {buildNumber}, remove '-SNAPSHOT' and update the 'pom.xml' file -->
                     <plugin>
-                        <groupId>com.bew.mojo</groupId>
+                        <groupId>com.bewsoftware.mojo</groupId>
                         <artifactId>simple-buildnumber-maven-plugin</artifactId>
                         <executions>
                             <execution>
@@ -373,7 +375,29 @@
         <profile>
             <id>release-profile</id>
             <build>
-                <plugins>                    
+             
+<!--                <finalName>${project.finalBaseName}-2</finalName>-->
+
+                <plugins>                       
+                    <!-- Keep current {buildNumber}, remove '-SNAPSHOT' and update the 'pom.xml' file -->
+                    <plugin>
+                        <groupId>com.bewsoftware.mojo</groupId>
+                        <artifactId>simple-buildnumber-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>Release</id>
+                                <goals>
+                                    <goal>create-xml</goal>
+                                </goals>
+                                <configuration>
+                                    <release>true</release>
+                                    <keepNumber>true</keepNumber>
+                                    <finalBaseNamePropertyName>finalBaseName</finalBaseNamePropertyName>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                 
                     <plugin>
                         <groupId>com.bewsoftware.mojo</groupId>
                         <artifactId>bewsoftware-mdj-plugin</artifactId>
@@ -395,7 +419,7 @@
                                     <goal>jar</goal>
                                 </goals>
                                 <configuration>
-                                    <jarFilename>${project.build.finalName}-manual.jar</jarFilename>
+                                    <jarFilename>${finalBaseName}-manual.jar</jarFilename>
                                     <jarSrcDir>target/docs/manual</jarSrcDir>
                                     <docRootDir>src/docs/manual</docRootDir>
                                     <verbosity></verbosity>
@@ -407,7 +431,7 @@
                                     <goal>jar</goal>
                                 </goals>
                                 <configuration>
-                                    <jarFilename>${project.build.finalName}-manual-src.jar</jarFilename>
+                                    <jarFilename>${finalBaseName}-manual-src.jar</jarFilename>
                                     <jarSrcDir>src/docs/manual</jarSrcDir>
                                     <docRootDir>src/docs/manual</docRootDir>
                                     <verbosity></verbosity>
@@ -431,12 +455,12 @@
                                     <includeProjectDependencies>false</includeProjectDependencies>
                                     <includePluginDependencies>true</includePluginDependencies>
                                     <arguments>
-                                        <argument>-r</argument>
-                                        <argument>${project.build.finalName}.zip</argument>
-                                        <argument>${project.build.finalName}.jar</argument>
-                                        <argument>${project.build.finalName}-manual.jar</argument>
-                                        <argument>${project.build.finalName}-manual-src.jar</argument>
-                                        <argument>libs</argument>
+                                        <!--<argument>-r</argument>-->
+                                        <argument>${finalBaseName}.zip</argument>
+                                        <argument>${finalBaseName}.jar</argument>
+                                        <argument>${finalBaseName}-manual.jar</argument>
+                                        <argument>${finalBaseName}-manual-src.jar</argument>
+                                        <!--<argument>libs</argument>-->
                                     </arguments> 
                                 </configuration>
                             </execution>
@@ -458,7 +482,7 @@
                                     <version>${project.artifact.version}</version>
                                     <classifier>manual</classifier>
                                     <packaging>jar</packaging>
-                                    <file>${project.build.directory}/${project.build.finalName}-manual.jar</file>
+                                    <file>${project.build.directory}/${finalBaseName}-manual.jar</file>
                                 </configuration>
                             </execution>
                             <execution>
@@ -473,7 +497,7 @@
                                     <version>${project.artifact.version}</version>
                                     <classifier>manual-src</classifier>
                                     <packaging>jar</packaging>
-                                    <file>${project.build.directory}/${project.build.finalName}-manual-src.jar</file>
+                                    <file>${project.build.directory}/${finalBaseName}-manual-src.jar</file>
                                 </configuration>
                             </execution>
                         </executions>
@@ -520,14 +544,14 @@
             <plugins>
                 <plugin>
                     <groupId>com.bewsoftware.mojo</groupId>
-                    <artifactId>bewsoftware-mdj-plugin</artifactId>
-                    <version>1.0.38</version>
-                </plugin>                
-                <plugin>
-                    <groupId>com.bewsoftware.mojo</groupId>
                     <artifactId>simple-buildnumber-maven-plugin</artifactId>
                     <version>1.1.0-SNAPSHOT</version>
                 </plugin>
+                <plugin>
+                    <groupId>com.bewsoftware.mojo</groupId>
+                    <artifactId>bewsoftware-mdj-plugin</artifactId>
+                    <version>1.0.38</version>
+                </plugin>                
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>build-helper-maven-plugin</artifactId>
@@ -619,20 +643,6 @@
         </pluginManagement>
         
         <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>true</filtering>
-                <includes>
-                    <include>**/mcpom.properties</include>
-                </includes>
-            </resource>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>false</filtering>
-                <excludes>
-                    <exclude>**/mcpom.properties</exclude>
-                </excludes>
-            </resource>
             <resource>
                 <directory>
                     src/docs/manual

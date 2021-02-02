@@ -41,13 +41,9 @@ public class IncrementMojo extends AbstractBuildNumberMojo {
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
+
         getLog().debug("Entry: execute()");
-
-        if (run(KEEP))
-        {
-            return;
-        }
-
+        run(KEEP);
         getLog().debug("Exit: execute()");
     }
 

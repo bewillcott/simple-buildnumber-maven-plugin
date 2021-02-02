@@ -24,7 +24,6 @@ import java.util.regex.Pattern;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
@@ -208,6 +207,12 @@ public class CreateXMLMojo extends AbstractMojo {
     private String buildNumberPropertyName;
 
     /**
+     * Set the property name of the returned value for the final base filename string.
+     */
+    @Parameter
+    private String finalBaseNamePropertyName;
+
+    /**
      * Project output filename.
      */
     private String finalName;
@@ -218,12 +223,6 @@ public class CreateXMLMojo extends AbstractMojo {
      */
     @Parameter(defaultValue = "false")
     private boolean keepNumber;
-
-    /**
-     * Define a static logger variable so that it references the
-     * Logger instance named "CreateXMLMojoTest".
-     */
-    private final Log log = getLog();
 
     /**
      * The project's version as base: major.minor (eg: 1.0)
@@ -283,24 +282,20 @@ public class CreateXMLMojo extends AbstractMojo {
 
     /**
      * The maven project.
-     *
-     * @parameter property="project"
-     * @readonly
-     * @required
      */
-    @Parameter(property = "project", readonly = true, required = true)
-    private MavenProject theProject;
+    @Parameter(defaultValue = "${project}", readonly = true, required = true)
+    private MavenProject project;
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
 
-        log.debug("Entry");
-        log.debug("simple.buildNumber.propertyName: " + buildNumberPropertyName);
-        log.debug("theProject: " + theProject.toString());
+        getLog().debug("Entry");
+        getLog().debug("simple.buildNumber.propertyName: " + buildNumberPropertyName);
+        getLog().debug("theProject: " + project.toString());
 
         if (skip)
         {
-            log.info("Skipping execution.");
+            getLog().info("Skipping execution.");
             return;
         }
 
@@ -331,16 +326,16 @@ public class CreateXMLMojo extends AbstractMojo {
                           + "Do NOT directly edit this as it WILL be replaced each time\n"
                           + "this plugin is run, unless <keepNumber>true</keepNumber> is\n"
                           + "configured.";
-            log.error(msg1);
-            log.warn(msg2);
+            getLog().error(msg1);
+            getLog().warn(msg2);
             throw new MojoFailureException("The 'major.minor.version' property has not been set.");
         }
 
-        if (theProject != null)
+        if (project != null)
         {
             // Get the timestamp.
             String now = Long.toString(Calendar.getInstance().toInstant().getEpochSecond());
-            log.debug("Time stamp: " + now);
+            getLog().debug("Time stamp: " + now);
 
             // create if not exists
             if (!propertiesFileLocation.exists())
@@ -359,7 +354,7 @@ public class CreateXMLMojo extends AbstractMojo {
                 }
             }
 
-            log.debug("Accessing properties file.");
+            getLog().debug("Accessing properties file.");
 
             Properties properties = new Properties();
             String strBuildNumber = null;
@@ -376,7 +371,7 @@ public class CreateXMLMojo extends AbstractMojo {
 
             strBuildNumber = properties.getProperty(BUILDNUMBER);
 
-            log.debug(BUILDNUMBER + " : " + strBuildNumber);
+            getLog().debug(BUILDNUMBER + " : " + strBuildNumber);
 
             if (strBuildNumber == null)
             {
@@ -395,7 +390,7 @@ public class CreateXMLMojo extends AbstractMojo {
                         + strBuildNumber);
             }
 
-            log.debug("keepNumber: " + keepNumber);
+            getLog().debug("keepNumber: " + keepNumber);
 
             if (!keepNumber)
             {
@@ -403,8 +398,8 @@ public class CreateXMLMojo extends AbstractMojo {
                 properties.setProperty(BUILDNUMBER, String.valueOf(++buildNumber));
                 properties.setProperty("time", now);
 
-                log.debug("Storing properties: " + propertiesFileLocation);
-                log.debug(properties.toString());
+                getLog().debug("Storing properties: " + propertiesFileLocation);
+                getLog().debug(properties.toString());
 
                 try (FileOutputStream outputStream = new FileOutputStream(propertiesFileLocation))
                 {
@@ -415,55 +410,61 @@ public class CreateXMLMojo extends AbstractMojo {
                 }
             }
 
-            log.debug("revision: " + buildNumber);
+            getLog().debug("revision: " + buildNumber);
 
             // Set the property to the current/new version string.
             setProperty(buildNumberPropertyName, "" + buildNumber);
 
             if (!keepNumber)
             {
-                log.info("New " + buildNumberPropertyName + ": " + buildNumber + "\n");
+                getLog().info("New " + buildNumberPropertyName + ": " + buildNumber + "\n");
+
             } else
             {
-                log.info("Keeping previous " + buildNumberPropertyName + ": " + buildNumber + "\n");
+                getLog().info("*** Keeping previous " + buildNumberPropertyName + ": " + buildNumber + "\n");
             }
 
             // Update 'project.version'
             String projectVersion = majorMinorVersion + "." + buildNumber + (release ? "" : "-SNAPSHOT");
-            log.debug("[OLD] project.artifact().getVersion(): " + theProject.getArtifact().getVersion());
-            theProject.getArtifact().selectVersion(projectVersion);
-            log.debug("[NEW] project.artifact().getVersion(): " + theProject.getArtifact().getVersion() + "\n");
-            log.debug("[OLD] project.getModel().getVersion(): " + theProject.getModel().getVersion());
-            theProject.getModel().setVersion(projectVersion);
-            log.debug("[NEW] project.getModel().getVersion(): " + theProject.getModel().getVersion() + "\n");
+            getLog().debug("[OLD] project.artifact().getVersion(): " + project.getArtifact().getVersion());
+            project.getArtifact().selectVersion(projectVersion);
+            getLog().debug("[NEW] project.artifact().getVersion(): " + project.getArtifact().getVersion() + "\n");
+            getLog().debug("[OLD] project.getModel().getVersion(): " + project.getModel().getVersion());
+            project.getModel().setVersion(projectVersion);
+            getLog().debug("[NEW] project.getModel().getVersion(): " + project.getModel().getVersion() + "\n");
 
-            log.debug("update project 'pom.xml' file");
+            getLog().debug("update project 'pom.xml' file");
             updatePOM(projectVersion);
 
             // Final name of files
-            log.debug("[OLD] theProject.getBuild().getFinalName(): " + theProject.getBuild().getFinalName());
-            finalName = theProject.getBuild().getFinalName();
+            getLog().info("[OLD] theProject.getBuild().getFinalName(): " + project.getBuild().getFinalName());
+            finalName = project.getBuild().getFinalName();
             updateFinalName(projectVersion);
-            theProject.getBuild().setFinalName(finalName);
-            log.debug("[NEW] theProject.getBuild().getFinalName(): " + theProject.getBuild().getFinalName());
+            project.getBuild().setFinalName(finalName);
+            getLog().info("[NEW] theProject.getBuild().getFinalName(): " + project.getBuild().getFinalName());
+
+            if (finalBaseNamePropertyName != null)
+            {
+                setProperty(finalBaseNamePropertyName, finalName);
+            }
         }
 
-        log.debug("Exit");
+        getLog().debug("Exit");
     }
 
     private String getProperty(String property) {
-        return theProject.getProperties().getProperty(property);
+        return project.getProperties().getProperty(property);
     }
 
     private void setProperty(String property, String value) {
         if (value != null)
         {
-            theProject.getProperties().put(property, value);
+            project.getProperties().setProperty(property, value);
         }
     }
 
     private void updateFinalName(String projectVersion) {
-        log.debug("Entry - projectVersion: " + projectVersion);
+        getLog().debug("Entry - projectVersion: " + projectVersion);
 
         String regex = "(?<text>" + oldVersion + ")";
         StringBuilder sb = new StringBuilder();
@@ -476,14 +477,14 @@ public class CreateXMLMojo extends AbstractMojo {
             m.appendReplacement(sb, projectVersion);
         } else
         {
-            log.warn("WARNING: project.build.finalName - Not Updated");
+            getLog().warn("WARNING: project.build.finalName - Not Updated");
         }
 
         m.appendTail(sb);
-        log.debug("sb:\n" + sb);
+        getLog().debug("sb:\n" + sb);
         finalName = sb.toString();
 
-        log.debug("Exit");
+        getLog().debug("Exit");
     }
 
     /**
@@ -495,14 +496,14 @@ public class CreateXMLMojo extends AbstractMojo {
      * @throws MojoExecutionException
      */
     private void updatePOM(String projectVersion) throws MojoFailureException, MojoExecutionException {
-        log.debug("Entry - projectVersion: " + projectVersion);
+        getLog().debug("Entry - projectVersion: " + projectVersion);
 
         String regex = "^(?<lead>[ ]{" + numberOfIndentSpaces + "}\\<version\\>)(?<text>[^<]*)(?<tail>\\</version\\>[ ]*\\n)";
         StringBuilder pomText = new StringBuilder();
         StringBuilder sb = new StringBuilder();
         String input = "";
 
-        log.debug("About to read in pom file: " + pomFile);
+        getLog().debug("About to read in pom file: " + pomFile);
 
         try (BufferedReader in = new BufferedReader(new FileReader(pomFile)))
         {
@@ -520,11 +521,11 @@ public class CreateXMLMojo extends AbstractMojo {
 
         if (m.find())
         {
-            log.debug("Found: |" + m.group() + "|");
+            getLog().debug("Found: |" + m.group() + "|");
             oldVersion = m.group("text");
-            log.debug("text: |" + oldVersion + "|");
+            getLog().debug("text: |" + oldVersion + "|");
             String replacement = m.group("lead") + projectVersion + m.group("tail");
-            log.debug("replacement: |" + replacement + "|");
+            getLog().debug("replacement: |" + replacement + "|");
             m.appendReplacement(sb, replacement);
         } else
         {
@@ -532,7 +533,7 @@ public class CreateXMLMojo extends AbstractMojo {
         }
 
         m.appendTail(sb);
-        log.debug("sb:\n" + sb);
+        getLog().debug("sb:\n" + sb);
 
         try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(pomFile))))
         {
@@ -542,6 +543,6 @@ public class CreateXMLMojo extends AbstractMojo {
             throw new MojoFailureException("pom.xml file output related error.", ex);
         }
 
-        log.debug("Exit");
+        getLog().debug("Exit");
     }
 }
