@@ -9,7 +9,7 @@
         </Console>
     </Appenders>
     <Loggers>
-        <Logger name="com.bew.mojo.buildnumber.simple.CreateXMLMojo" level="info" additivity="false">
+        <Logger name="com.bewsoftware.mojo.buildnumber.simple.CreateXMLMojo" level="debug" additivity="false">
             <AppenderRef ref="InfoConsole"/>
         </Logger>        
         <Root level="error">

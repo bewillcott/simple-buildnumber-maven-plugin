@@ -509,6 +509,13 @@
     <build>
         <resources>
             <resource>
+                <directory>src/main/resources</directory>
+                <!--<filtering>true</filtering>-->
+                <includes>
+                    <include>**/*</include>
+                </includes>
+            </resource>
+            <resource>
                 <directory>
                     docs
                 </directory>
@@ -548,7 +555,7 @@
                     <version>1.0.38</version>
                 </plugin>                
                 <plugin>                        
-                    <groupId>com.bew.mojo</groupId>
+                    <groupId>com.bewsoftware.mojo</groupId>
                     <artifactId>simple-buildnumber-maven-plugin</artifactId>
                     <version>${project.version}</version>
                 </plugin>
@@ -687,7 +694,7 @@
                 <configuration>
                     <encoding>${source.encoding}</encoding>
                 </configuration>
-                <executions>
+<!--                <executions>
                     <execution>                        
                         <id>Copy-Manual-to-basedir</id>
                         <goals>
@@ -705,7 +712,7 @@
                             </resources>
                         </configuration>
                     </execution>
-                </executions>
+                </executions>-->
             </plugin>
         </plugins>
     </build>

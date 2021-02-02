@@ -97,7 +97,7 @@ public abstract class AbstractBuildNumberMojo extends AbstractMojo {
      *
      * @param keep Determines whether or not to keep old number.
      *
-     * @return {@code true} if skip'ing, {@code false} otherwise.
+     * @return {@code true} if completed, {@code false} otherwise.
      *
      * @throws MojoFailureException   if any.
      * @throws MojoExecutionException if any.
@@ -110,7 +110,7 @@ public abstract class AbstractBuildNumberMojo extends AbstractMojo {
         if (skip)
         {
             getLog().info("\nSkipping execution.");
-            return true;
+            return false;
         }
 
         if (theProject != null)
@@ -124,7 +124,7 @@ public abstract class AbstractBuildNumberMojo extends AbstractMojo {
             }
         }
 
-        return false;
+        return true;
     }
 
     /**
