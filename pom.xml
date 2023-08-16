@@ -37,7 +37,7 @@
     
     <properties>
         <major.minor.version>2.0</major.minor.version>
-        <maven.version>3.6.3</maven.version>
+        <maven.version>3.8.1</maven.version>
         <java.version>12</java.version>
         <source.encoding>UTF-8</source.encoding>
         <maven.compiler.source>${java.version}</maven.compiler.source>
